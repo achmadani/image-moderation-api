@@ -1,0 +1,7 @@
+{
+  "source": "nsfwjs/dist/models/mobilenet_v2",
+  "nsfwjsVersion": "4.3.0",
+  "modelVersion": "nsfwjs-mobilenet-v2",
+  "inputSize": 224,
+  "bakedAt": "2026-09-08T13:59:01.047Z"
+}

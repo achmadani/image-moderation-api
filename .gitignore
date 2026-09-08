@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.staging
+.env.prod
+!.env.example
+test/fixtures/generated/
+*.log
+coverage/
+.DS_Store

@@ -1,0 +1,56 @@
+# Production. Identical image to staging — only env_file and the published port
+# differ, so what was tested in staging is byte-for-byte what runs here.
+#
+#   docker compose -f docker-compose.prod.yml up -d
+# Distinct project name: both files otherwise derive it from the directory,
+# and `up` on one would tear down the other's container as a stale resource.
+name: image-moderation-prod
+
+services:
+  image-moderation:
+    image: image-moderation:${IMAGE_TAG:-latest}
+    container_name: image-moderation-prod
+    restart: unless-stopped
+
+    env_file:
+      - .env.prod
+
+    # Loopback only: nginx on the host terminates TLS and proxies to this port.
+    # Without the 127.0.0.1 prefix Docker would publish it on every interface
+    # and punch straight through the host firewall.
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    mem_limit: 1500m
+    # Equal to mem_limit: with swap allowed the container would thrash the SSD
+    # instead of failing fast when a leak appears.
+    memswap_limit: 1500m
+    cpus: 2.0
+
+    # The service writes nothing to disk (rule #8: only the hash is kept), so
+    # the filesystem can stay read-only. sharp and libtensorflow only need /tmp.
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+    # Gives server.js time to drain (/ready -> 503), finish in-flight work and
+    # terminate the workers before Docker escalates to SIGKILL.
+    stop_grace_period: 30s

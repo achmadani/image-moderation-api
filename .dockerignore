@@ -1,0 +1,32 @@
+# Rebuilt inside the image for the target platform — copying the host's macOS
+# or arm64 binaries in would break the native bindings.
+node_modules
+
+# Secrets and local state
+.env
+.env.*
+!.env.example
+
+# Not needed at runtime
+test
+scripts
+docs
+*.md
+!README.md
+
+# Tooling and noise
+.git
+.gitignore
+.github
+.vscode
+.idea
+.DS_Store
+*.log
+coverage
+.nyc_output
+npm-debug.log*
+
+# The image builds itself; it must not contain its own build context
+Dockerfile
+.dockerignore
+docker-compose*.yml
