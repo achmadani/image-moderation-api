@@ -21,12 +21,16 @@ process.env.TF_CPP_MIN_LOG_LEVEL = process.env.TF_CPP_MIN_LOG_LEVEL || '2';
 
 // Resolves the usable namespace rather than trusting tfjs-node's re-export,
 // which comes up empty on some platform/Node combinations. See src/utils/tf.js.
-const { tf, namespace, tfVersion } = require('../utils/tf');
+const { tf, namespace, tfVersion, ensureReady } = require('../utils/tf');
 const nsfw = require('nsfwjs');
 
 let model = null;
 
 async function init() {
+  // Fails loudly here if the native backend or the file:// router is missing,
+  // rather than surfacing as an unreadable model-load error a moment later.
+  await ensureReady();
+
   model = await nsfw.load(`file://${modelPath}/model.json`, { size: modelInputSize });
 
   // Warm up so the first real request does not pay lazy kernel allocation.

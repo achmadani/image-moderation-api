@@ -8,21 +8,20 @@
  * cannot produce a container whose workers die on their first tf call.
  */
 
-const { tf, namespace, tfVersion, inspect } = require('../src/utils/tf');
+const { tf, namespace, tfVersion, inspect, ensureReady } = require('../src/utils/tf');
 
 const line = (k, v) => console.log(`  ${String(k).padEnd(22)} ${v}`);
 
-try {
+async function main() {
   console.log('tfjs runtime check');
   line('node', `${process.version} ${process.platform}/${process.arch}`);
   line('tfjs-core version', tfVersion);
   line('namespace in use', namespace);
 
-  const backend = tf.getBackend();
+  // Also asserts the file:// IO router, which the app needs to load MODEL_PATH.
+  const { backend } = await ensureReady();
   line('backend', backend);
-  if (backend !== 'tensorflow') {
-    throw new Error(`expected the native 'tensorflow' backend, got '${backend}' — the native binding did not load`);
-  }
+  line('file:// io router', 'registered');
 
   if (namespace !== '@tensorflow/tfjs-node') {
     // Not fatal, but worth seeing in the build log: it means tfjs-node's
@@ -45,7 +44,9 @@ try {
   }
 
   console.log('  RESULT: ok');
-} catch (err) {
+}
+
+main().catch((err) => {
   console.error('\ntfjs runtime check FAILED');
   console.error(`  ${err.message}\n`);
   console.error('  namespace candidates:');
@@ -54,5 +55,7 @@ try {
       console.error(`    ${row.name.padEnd(24)} resolvable=${row.resolvable} keys=${row.keys} missing=[${row.missing.join(', ')}]`);
     }
   } catch { /* inspect itself may be unavailable */ }
+  console.error('\n  If a candidate shows only 2 keys, its dist/index.js stopped early:');
+  console.error('  rebuild the dependency layer from scratch with `docker build --no-cache`.');
   process.exit(1);
-}
+});
