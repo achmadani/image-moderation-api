@@ -25,14 +25,24 @@ COPY package.json package-lock.json ./
 
 RUN npm ci --omit=dev --no-audit --no-fund
 
-# Fail the build here, not in production: prove the native binding actually
-# loads and that the CPU backend is the real libtensorflow one.
-RUN node -e "const tf=require('@tensorflow/tfjs-node'); \
-  if (tf.getBackend() !== 'tensorflow') { throw new Error('expected the native tensorflow backend, got ' + tf.getBackend()); } \
-  console.log('tfjs-node ok:', tf.version['tfjs-core'], tf.getBackend());"
+# -----------------------------------------------------------------------------
+# Stage 2: verification
+#
+# A separate stage so `--target deps` can produce a shell for debugging without
+# having to satisfy the check first. `runtime` copies node_modules from here
+# rather than from `deps`, which is what forces this stage to actually run —
+# BuildKit skips any stage nothing depends on.
+# -----------------------------------------------------------------------------
+FROM deps AS verify
+
+# The check runs the very same resolver the workers use, so it cannot pass here
+# and then fail at runtime.
+COPY scripts/verify-runtime.js ./scripts/verify-runtime.js
+COPY src/utils/tf.js ./src/utils/tf.js
+RUN node scripts/verify-runtime.js
 
 # -----------------------------------------------------------------------------
-# Stage 2: runtime
+# Stage 3: runtime
 # -----------------------------------------------------------------------------
 FROM node:22-bookworm-slim AS runtime
 
@@ -51,7 +61,7 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=verify /app/node_modules ./node_modules
 COPY package.json ./
 COPY src ./src
 # Rule #2: the model is baked in. Nothing is downloaded at runtime, so the

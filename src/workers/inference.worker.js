@@ -19,7 +19,9 @@ if (tfIntraOpThreads > 0) process.env.TF_NUM_INTRAOP_THREADS = String(tfIntraOpT
 if (tfInterOpThreads > 0) process.env.TF_NUM_INTEROP_THREADS = String(tfInterOpThreads);
 process.env.TF_CPP_MIN_LOG_LEVEL = process.env.TF_CPP_MIN_LOG_LEVEL || '2';
 
-const tf = require('@tensorflow/tfjs-node');
+// Resolves the usable namespace rather than trusting tfjs-node's re-export,
+// which comes up empty on some platform/Node combinations. See src/utils/tf.js.
+const { tf, namespace, tfVersion } = require('../utils/tf');
 const nsfw = require('nsfwjs');
 
 let model = null;
@@ -35,7 +37,7 @@ async function init() {
     warm.dispose();
   }
 
-  parentPort.postMessage({ type: 'ready', backend: tf.getBackend(), tfVersion: tf.version['tfjs-core'] });
+  parentPort.postMessage({ type: 'ready', backend: tf.getBackend(), tfVersion, namespace });
 }
 
 /**
@@ -75,6 +77,7 @@ parentPort.on('message', async (msg) => {
       predictions,
       inferenceMs: Number(process.hrtime.bigint() - startedAt) / 1e6,
       numTensors: tf.memory().numTensors,
+      numBytes: tf.memory().numBytes,
       rssBytes: process.memoryUsage().rss,
     });
   } catch (err) {

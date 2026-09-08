@@ -97,7 +97,7 @@ class WorkerPool extends EventEmitter {
         if (!isCurrent()) return;
         if (msg.type === 'ready') {
           slot.ready = true;
-          this.logger.info({ worker: slot.id, backend: msg.backend, tfVersion: msg.tfVersion }, 'worker ready');
+          this.logger.info({ worker: slot.id, backend: msg.backend, tfVersion: msg.tfVersion, namespace: msg.namespace }, 'worker ready');
           resolve();
           this._drain();
           return;
@@ -168,6 +168,7 @@ class WorkerPool extends EventEmitter {
         predictions: msg.predictions,
         inferenceMs: msg.inferenceMs,
         numTensors: msg.numTensors,
+        numBytes: msg.numBytes,
         rssBytes: msg.rssBytes,
         waitMs: task.startedAt - task.enqueuedAt,
       });

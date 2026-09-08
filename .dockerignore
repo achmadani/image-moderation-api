@@ -7,9 +7,11 @@ node_modules
 .env.*
 !.env.example
 
-# Not needed at runtime
+# Not needed at runtime. scripts/verify-runtime.js is the exception: the verify
+# stage copies it in, so it must stay in the build context.
 test
-scripts
+scripts/*
+!scripts/verify-runtime.js
 docs
 *.md
 !README.md
