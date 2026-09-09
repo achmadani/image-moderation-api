@@ -4,12 +4,12 @@
 #   docker compose -f docker-compose.prod.yml up -d
 # Distinct project name: both files otherwise derive it from the directory,
 # and `up` on one would tear down the other's container as a stale resource.
-name: image-moderation-prod
+name: nsfwjs-prod
 
 services:
   image-moderation:
     image: image-moderation:${IMAGE_TAG:-latest}
-    container_name: image-moderation-prod
+    container_name: nsfwjs-prod
     restart: unless-stopped
 
     env_file:
