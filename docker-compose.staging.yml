@@ -21,10 +21,14 @@ services:
     ports:
       - "127.0.0.1:3001:3000"
 
-    mem_limit: 1500m
+    # Measured: ~290MB idle, and 12 concurrent 49-megapixel uploads add only
+    # ~90MB on top — libvips decodes in tiles rather than materialising the
+    # whole bitmap, so sharp is not the memory hazard it looks like. 1GB leaves
+    # roughly 2.5x headroom over the observed peak.
+    mem_limit: 1024m
     # Equal to mem_limit: with swap allowed the container would thrash the SSD
     # instead of failing fast when a leak appears.
-    memswap_limit: 1500m
+    memswap_limit: 1024m
     cpus: 2.0
 
     # The service writes nothing to disk (rule #8: only the hash is kept), so

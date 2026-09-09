@@ -19,12 +19,17 @@ services:
     # Without the 127.0.0.1 prefix Docker would publish it on every interface
     # and punch straight through the host firewall.
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3002:3000"
+      # - "192.168.1.10:3002:3000"
 
-    mem_limit: 1500m
+    # Measured: ~290MB idle, and 12 concurrent 49-megapixel uploads add only
+    # ~90MB on top — libvips decodes in tiles rather than materialising the
+    # whole bitmap, so sharp is not the memory hazard it looks like. 1GB leaves
+    # roughly 2.5x headroom over the observed peak.
+    mem_limit: 1024m
     # Equal to mem_limit: with swap allowed the container would thrash the SSD
     # instead of failing fast when a leak appears.
-    memswap_limit: 1500m
+    memswap_limit: 1024m
     cpus: 2.0
 
     # The service writes nothing to disk (rule #8: only the hash is kept), so
@@ -45,7 +50,7 @@ services:
         max-file: "3"
 
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/ready"]
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3002/ready"]
       interval: 30s
       timeout: 5s
       retries: 3
