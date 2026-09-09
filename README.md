@@ -163,7 +163,7 @@ host's platform, and `npm ci` inside the image installs the linux-x64 ones.
 
 ```bash
 # 1. build for the server's architecture
-docker build --platform linux/amd64 -t image-moderation:1.0.0 .
+docker build --platform linux/amd64 -t nsfwjs:1.0.0 .
 
 # 2. environment (never commit these)
 cp .env.example .env.prod
@@ -173,7 +173,7 @@ openssl rand -hex 24            # put the result in API_KEYS
 IMAGE_TAG=1.0.0 docker compose -f docker-compose.prod.yml up -d
 
 # 4. confirm
-./scripts/smoke-test.sh http://127.0.0.1:3000 image-moderation:1.0.0
+./scripts/smoke-test.sh http://127.0.0.1:3000 nsfwjs:1.0.0
 ```
 
 `smoke-test.sh` checks readiness, both auth rejections, a real inference, the

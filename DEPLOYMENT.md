@@ -532,7 +532,7 @@ IMAGE_TAG=1.0.0 docker compose -f docker-compose.prod.yml up -d
 ```
 
 File compose hanya menyebut `image:`, tanpa `build:`. Itu disengaja: kalau
-keduanya bisa membangun sendiri, `image-moderation:1.0.0` di staging bisa jadi
+keduanya bisa membangun sendiri, `nsfwjs:1.0.0` di staging bisa jadi
 biner yang berbeda dari yang bertag sama di produksi, dan pengujian staging
 kehilangan artinya. Konsekuensinya, `up -d` akan **gagal** kalau image belum
 dibangun — bukan diam-diam membangunnya. Build dulu, baru `up`.
@@ -569,7 +569,7 @@ yang menyebut penyebabnya langsung.
 
 | Gejala | Penyebab | Perbaikan |
 |---|---|---|
-| `pull access denied ... repository does not exist` | image belum ada secara lokal; file compose sengaja tidak punya `build:` | `docker build --platform linux/amd64 -t image-moderation:<tag> .` lalu `up -d` |
+| `pull access denied ... repository does not exist` | image belum ada secara lokal; file compose sengaja tidak punya `build:` | `docker build --platform linux/amd64 -t nsfwjs:<tag> .` lalu `up -d` |
 | `/ready` 503 terus | model gagal dimuat | `logs` — cari `model load failed` |
 | `Could not locate the bindings file` | node_modules dari platform lain | build ulang image, jangan mount node_modules host |
 | Container di-OOM-kill | `mem_limit` terlalu kecil | `docker inspect ... --format '{{.State.OOMKilled}}'`; naikkan limit atau turunkan `MAX_CONCURRENT_REQUESTS` |

@@ -9,7 +9,7 @@
 set -euo pipefail
 
 BASE_URL="${1:-http://127.0.0.1:3000}"
-IMAGE="${2:-image-moderation:latest}"
+IMAGE="${2:-nsfwjs:latest}"
 
 if [[ -z "${API_KEY:-}" ]]; then
   for f in .env.prod .env.staging .env; do

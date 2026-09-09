@@ -7,8 +7,8 @@
 name: image-moderation-staging
 
 services:
-  image-moderation:
-    image: image-moderation:${IMAGE_TAG:-latest}
+  nsfwjs:
+    image: nsfwjs:${IMAGE_TAG:-latest}
     container_name: image-moderation-staging
     restart: unless-stopped
 
