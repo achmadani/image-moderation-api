@@ -292,7 +292,7 @@ docker run --rm --entrypoint node image-moderation:1.0.0 -e 'require("sharp")({c
 ```
 
 ```bash
-( for i in $(seq 1 200); do docker stats --no-stream --format '{{.MemUsage}}' image-moderation-prod; done > /tmp/peak.txt ) & for i in $(seq 1 12); do curl -s -o /dev/null -X POST http://127.0.0.1:3000/v1/moderate -H "X-API-Key: $(grep -E '^API_KEYS=' .env.prod | cut -d= -f2 | cut -d, -f1)" -F "image=@/tmp/49mp.jpg" & done; wait; sort -h /tmp/peak.txt | tail -1
+( for i in $(seq 1 200); do docker stats --no-stream --format '{{.MemUsage}}' nsfwjs-prod; done > /tmp/peak.txt ) & for i in $(seq 1 12); do curl -s -o /dev/null -X POST http://127.0.0.1:3000/v1/moderate -H "X-API-Key: $(grep -E '^API_KEYS=' .env.prod | cut -d= -f2 | cut -d, -f1)" -F "image=@/tmp/49mp.jpg" & done; wait; sort -h /tmp/peak.txt | tail -1
 ```
 
 Baris terakhir adalah puncak sesungguhnya. Kalau di bawah 60% `mem_limit`,
@@ -357,7 +357,7 @@ docker compose -f docker-compose.prod.yml ps && curl -s http://127.0.0.1:3000/re
 ### Resource
 
 ```bash
-docker stats --no-stream image-moderation-prod
+docker stats --no-stream nsfwjs-prod
 ```
 
 ### Prometheus
@@ -604,7 +604,7 @@ docker compose -f docker-compose.prod.yml logs -f --tail=100
 curl -s http://127.0.0.1:3000/ready | python3 -m json.tool
 
 # resource
-docker stats --no-stream image-moderation-prod
+docker stats --no-stream nsfwjs-prod
 
 # uji fungsional
 ./scripts/smoke-test.sh http://127.0.0.1:3000 image-moderation:1.0.0
