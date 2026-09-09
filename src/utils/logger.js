@@ -10,7 +10,7 @@ const config = require('../config');
 function createLogger(bindings = {}) {
   return pino({
     level: config.logLevel,
-    base: { service: 'image-moderation', ...bindings },
+    base: { service: 'nsfwjs', ...bindings },
     timestamp: pino.stdTimeFunctions.isoTime,
     redact: {
       paths: ['req.headers["x-api-key"]', 'headers["x-api-key"]', 'apiKey'],

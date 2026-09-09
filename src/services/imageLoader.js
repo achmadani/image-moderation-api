@@ -276,7 +276,7 @@ class ImageLoader {
           port: url.port || (url.protocol === 'https:' ? 443 : 80),
           path: `${url.pathname}${url.search}`,
           method: 'GET',
-          headers: { accept: 'image/*', 'user-agent': 'image-moderation/1.0' },
+          headers: { accept: 'image/*', 'user-agent': 'nsfwjs/1.0' },
           timeout: urlFetchTimeoutMs,
           // Pin the connection to the address we validate here: node connects
           // to exactly this IP, so a second DNS answer cannot swap it out.

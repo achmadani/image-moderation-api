@@ -4,12 +4,12 @@
 #   docker compose -f docker-compose.staging.yml up -d
 # Distinct project name: both files otherwise derive it from the directory,
 # and `up` on one would tear down the other's container as a stale resource.
-name: image-moderation-staging
+name: nsfwjs:-staging
 
 services:
   nsfwjs:
     image: nsfwjs:${IMAGE_TAG:-latest}
-    container_name: image-moderation-staging
+    container_name: nsfwjs:-staging
     restart: unless-stopped
 
     env_file:

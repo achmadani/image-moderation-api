@@ -1,4 +1,4 @@
-# image-moderation
+# nsfwjs
 
 NSFW image moderation REST API. Fastify + nsfwjs (MobileNetV2) on CPU, inference
 isolated in `worker_threads`, packaged for a small Debian home server.

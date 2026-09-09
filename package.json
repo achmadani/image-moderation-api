@@ -1,5 +1,5 @@
 {
-  "name": "image-moderation-api",
+  "name": "nsfwjs-api",
   "version": "1.0.0",
   "description": "NSFW image moderation REST API (Fastify + nsfwjs on CPU)",
   "main": "src/server.js",
