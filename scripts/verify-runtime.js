@@ -8,12 +8,61 @@
  * cannot produce a container whose workers die on their first tf call.
  */
 
-const { tf, namespace, tfVersion, inspect, ensureReady } = require('../src/utils/tf');
+const fs = require('fs');
+const path = require('path');
 
 const line = (k, v) => console.log(`  ${String(k).padEnd(22)} ${v}`);
 
+/**
+ * Runs BEFORE tfjs is touched. An installed tree that does not match
+ * package.json produces failures far downstream — a tfjs-node 1.x install, for
+ * instance, surfaces only as "getBackend is not a function" — so name the
+ * mismatch here instead.
+ */
+function assertInstalledVersions() {
+  const root = path.join(__dirname, '..');
+  const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+
+  for (const name of ['@tensorflow/tfjs-node', 'nsfwjs', 'sharp']) {
+    const wanted = pkg.dependencies[name];
+    const wantedMajor = String(wanted).replace(/^[^0-9]*/, '').split('.')[0];
+
+    const installedPath = path.join(root, 'node_modules', name, 'package.json');
+    if (!fs.existsSync(installedPath)) {
+      throw new Error(`${name} is declared in package.json (${wanted}) but is not installed`);
+    }
+    const installed = JSON.parse(fs.readFileSync(installedPath, 'utf8')).version;
+
+    if (installed.split('.')[0] !== wantedMajor) {
+      throw new Error(
+        `${name} ${installed} is installed, but package.json asks for ${wanted}. ` +
+        'node_modules does not match this project — the package-lock.json used by ' +
+        '`npm ci` is not the one committed here. Compare its checksum with the repo copy.'
+      );
+    }
+    console.log(`  ${name.padEnd(20)} ${installed}`);
+  }
+
+  // The npm v6 layout nests a second copy of a package under its dependent,
+  // which gives each copy its own backend registry.
+  const nested = path.join(root, 'node_modules', '@tensorflow', 'tfjs-node', 'node_modules', '@tensorflow', 'tfjs-core');
+  if (fs.existsSync(nested)) {
+    throw new Error(
+      'a nested @tensorflow/tfjs-core exists under tfjs-node. That is an npm v6 ' +
+      '(lockfileVersion 1) install layout; this project pins lockfileVersion 3 with no nested copies. ' +
+      'node_modules was built from a different lockfile.'
+    );
+  }
+}
+
 async function main() {
   console.log('tfjs runtime check');
+  console.log('  installed packages:');
+  assertInstalledVersions();
+
+  // Required only after the version gate, so a mismatched tree reports itself
+  // instead of throwing somewhere inside tfjs.
+  const { tf, namespace, tfVersion, ensureReady } = require('../src/utils/tf');
   line('node', `${process.version} ${process.platform}/${process.arch}`);
   line('tfjs-core version', tfVersion);
   line('namespace in use', namespace);
@@ -51,7 +100,7 @@ main().catch((err) => {
   console.error(`  ${err.message}\n`);
   console.error('  namespace candidates:');
   try {
-    for (const row of inspect()) {
+    for (const row of require('../src/utils/tf').inspect()) {
       console.error(`    ${row.name.padEnd(24)} resolvable=${row.resolvable} keys=${row.keys} missing=[${row.missing.join(', ')}]`);
     }
   } catch { /* inspect itself may be unavailable */ }
