@@ -120,7 +120,7 @@ mengacaukan diagnostik apa pun yang Anda jalankan dengan mount.
 ## 4. Build
 
 ```bash
-cd /srv/image-moderation && docker build --platform linux/amd64 -t image-moderation:1.0.0 .
+cd /srv/image-moderation && docker build --platform linux/amd64 -t nsfwjs:1.0.0 .
 ```
 
 Tiga stage:
@@ -272,7 +272,7 @@ loop saat model lambat dimuat.
 ## 7. Verifikasi
 
 ```bash
-./scripts/smoke-test.sh http://127.0.0.1:3000 image-moderation:1.0.0
+./scripts/smoke-test.sh http://127.0.0.1:3000 nsfwjs:1.0.0
 ```
 
 Sembilan pemeriksaan: readiness, dua penolakan auth, inference sungguhan,
@@ -288,7 +288,7 @@ SMOKE TEST OK
 Ukur puncak memory dengan beban nyata di mesin Anda sendiri:
 
 ```bash
-docker run --rm --entrypoint node image-moderation:1.0.0 -e 'require("sharp")({create:{width:7000,height:7000,channels:3,background:{r:120,g:80,b:160}}}).jpeg({quality:85}).toBuffer().then(b=>process.stdout.write(b.toString("base64")))' | base64 -d > /tmp/49mp.jpg
+docker run --rm --entrypoint node nsfwjs:1.0.0 -e 'require("sharp")({create:{width:7000,height:7000,channels:3,background:{r:120,g:80,b:160}}}).jpeg({quality:85}).toBuffer().then(b=>process.stdout.write(b.toString("base64")))' | base64 -d > /tmp/49mp.jpg
 ```
 
 ```bash
@@ -364,7 +364,7 @@ docker stats --no-stream nsfwjs-prod
 
 ```yaml
 scrape_configs:
-  - job_name: image-moderation
+  - job_name: nsfwjs
     static_configs:
       - targets: ['127.0.0.1:3000']
 ```
@@ -417,7 +417,7 @@ Field yang tersedia:
 |---|---|
 | `level` | 30 info, 40 warn, 50 error, 60 fatal |
 | `time` | ISO 8601 |
-| `service` | selalu `image-moderation` |
+| `service` | selalu `nsfwjs` |
 | `reqId` | UUID, atau `X-Request-Id` dari nginx bila ada |
 | `req` | `method`, `url`, `remoteAddress` |
 | `res.statusCode` | status balasan |
@@ -510,13 +510,13 @@ Selalu beri tag versi, jangan `latest`. Itu yang membuat rollback jadi satu
 perintah.
 
 ```bash
-cd /srv/image-moderation && git pull && docker build --platform linux/amd64 -t image-moderation:1.1.0 .
+cd /srv/image-moderation && git pull && docker build --platform linux/amd64 -t nsfwjs:1.1.0 .
 ```
 
 Uji di staging dulu — **image yang sama**, hanya env dan port yang berbeda:
 
 ```bash
-IMAGE_TAG=1.1.0 docker compose -f docker-compose.staging.yml up -d && ./scripts/smoke-test.sh http://127.0.0.1:3001 image-moderation:1.1.0
+IMAGE_TAG=1.1.0 docker compose -f docker-compose.staging.yml up -d && ./scripts/smoke-test.sh http://127.0.0.1:3001 nsfwjs:1.1.0
 ```
 
 Kalau lolos, naikkan ke produksi:
@@ -531,10 +531,16 @@ Rollback:
 IMAGE_TAG=1.0.0 docker compose -f docker-compose.prod.yml up -d
 ```
 
+File compose hanya menyebut `image:`, tanpa `build:`. Itu disengaja: kalau
+keduanya bisa membangun sendiri, `image-moderation:1.0.0` di staging bisa jadi
+biner yang berbeda dari yang bertag sama di produksi, dan pengujian staging
+kehilangan artinya. Konsekuensinya, `up -d` akan **gagal** kalau image belum
+dibangun — bukan diam-diam membangunnya. Build dulu, baru `up`.
+
 Simpan minimal dua versi terakhir. Bersih-bersih image lama:
 
 ```bash
-docker image ls image-moderation && docker rmi image-moderation:0.9.0
+docker image ls nsfwjs && docker rmi nsfwjs:0.9.0
 ```
 
 Staging dan produksi memakai `name:` project yang berbeda, jadi bisa jalan
@@ -563,6 +569,7 @@ yang menyebut penyebabnya langsung.
 
 | Gejala | Penyebab | Perbaikan |
 |---|---|---|
+| `pull access denied ... repository does not exist` | image belum ada secara lokal; file compose sengaja tidak punya `build:` | `docker build --platform linux/amd64 -t image-moderation:<tag> .` lalu `up -d` |
 | `/ready` 503 terus | model gagal dimuat | `logs` — cari `model load failed` |
 | `Could not locate the bindings file` | node_modules dari platform lain | build ulang image, jangan mount node_modules host |
 | Container di-OOM-kill | `mem_limit` terlalu kecil | `docker inspect ... --format '{{.State.OOMKilled}}'`; naikkan limit atau turunkan `MAX_CONCURRENT_REQUESTS` |
@@ -607,7 +614,7 @@ curl -s http://127.0.0.1:3000/ready | python3 -m json.tool
 docker stats --no-stream nsfwjs-prod
 
 # uji fungsional
-./scripts/smoke-test.sh http://127.0.0.1:3000 image-moderation:1.0.0
+./scripts/smoke-test.sh http://127.0.0.1:3000 nsfwjs:1.0.0
 
 # restart
 docker compose -f docker-compose.prod.yml restart

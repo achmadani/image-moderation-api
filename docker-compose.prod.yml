@@ -8,7 +8,7 @@ name: nsfwjs-prod
 
 services:
   image-moderation:
-    image: image-moderation:${IMAGE_TAG:-latest}
+    image: nsfwjs:${IMAGE_TAG:-latest}
     container_name: nsfwjs-prod
     restart: unless-stopped
 
